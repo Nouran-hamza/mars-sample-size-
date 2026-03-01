@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARS Comprehensive Sample Size Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020c1b;
+    --surface: #071a33;
+    --surface2: #0a2545;
+    --border: #0d3060;
+    --accent: #4db8ff;
+    --accent2: #7ed6a8;
+    --accent3: #f7c94f;
+    --text: #e8f0fb;
+    --text-muted: #6b96cc;
+    --text-dim: #2d5080;
+    --danger: #f7604f;
+    --success: #7ed6a8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --navy: #0a2545;
+    --navy-deep: #051628;
+    --navy-light: #1a4a7a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(77,184,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,184,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(120px); pointer-events: none; z-index: 0;
+  }
+  .orb1 { width: 500px; height: 500px; background: rgba(77,184,255,0.08); top: -100px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(26,74,122,0.15); bottom: 100px; left: -80px; }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative; z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 36px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  /* logo-text h1 defined in MARS overrides below */
+  /* logo-text p defined in MARS overrides below */
+  .badge {
+    background: rgba(0,212,170,0.1);
+    border: 1px solid rgba(77,184,255,0.25);
+    color: var(--accent);
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Test selector */
+  .test-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 36px;
+  }
+  .test-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+  .test-btn:hover {
+    border-color: rgba(0,212,170,0.3);
+    color: var(--text);
+    background: var(--surface2);
+  }
+  .test-btn.active {
+    border-color: var(--accent);
+    background: rgba(0,212,170,0.08);
+    color: var(--text);
+  }
+  .test-btn .tb-icon { font-size: 1.1rem; margin-bottom: 5px; display: block; }
+  .test-btn .tb-name { font-weight: 600; color: inherit; display: block; font-size: 0.83rem; }
+  .test-btn .tb-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; display: block; }
+  .test-btn.active .tb-desc { color: var(--text-muted); }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .test-selector { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .card-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* Form elements */
+  .form-group {
+    margin-bottom: 18px;
+  }
+  .form-group label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .label-hint {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+  .form-control {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(77,184,255,0.1); }
+  .form-control:disabled {
+    background: rgba(77,184,255,0.07);
+    border-color: rgba(77,184,255,0.3);
+    color: var(--accent);
+    font-weight: 500;
+    cursor: not-allowed;
+  }
+  select.form-control { cursor: pointer; }
+  select.form-control option { background: var(--surface); }
+
+  .solve-target {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .solve-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 13px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    transition: all 0.18s;
+  }
+  .solve-btn:hover { border-color: rgba(79,142,247,0.4); color: var(--text); }
+  .solve-btn.active {
+    background: rgba(79,142,247,0.12);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .solve-label {
+    font-size: 0.73rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+  }
+
+  /* ES presets */
+  .es-presets {
+    display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .es-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: 'Outfit', sans-serif;
+    transition: all 0.15s;
+  }
+  .es-btn:hover { border-color: rgba(247,201,79,0.4); color: var(--accent3); }
+  .es-preset-label {
+    font-size: 0.73rem;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 500;
+  }
+
+  /* Calculate button */
+  .calc-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #1a6fb5, #0e4d8a);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    color: #e8f0fb;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 6px;
+  }
+  .calc-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(26,111,181,0.4);
+  }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* Results */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    min-height: 300px;
+  }
+  .result-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 240px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .result-empty .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+  .result-empty p { font-size: 0.85rem; line-height: 1.6; }
+
+  .result-main {
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+  .result-main.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-highlight {
+    background: linear-gradient(135deg, rgba(77,184,255,0.1), rgba(26,74,122,0.15));
+    border: 1px solid rgba(77,184,255,0.25);
+    border-radius: var(--radius-sm);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .result-highlight .rh-label {
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .result-highlight .rh-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    color: var(--text);
+    line-height: 1;
+  }
+  .result-highlight .rh-unit {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .result-params {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .rp-item {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .rp-item .rp-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+  .rp-item .rp-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.92rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Power bar */
+  .power-bar-wrap { margin-bottom: 20px; }
+  .power-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.77rem; color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .power-bar-track {
+    height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .power-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #1a6fb5, #4db8ff);
+    transition: width 0.8s cubic-bezier(.22,.68,0,1.2);
+    width: 0%;
+  }
+
+  /* Interpretation */
+  .interpretation {
+    background: rgba(77,184,255,0.05);
+    border: 1px solid rgba(77,184,255,0.15);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .interpretation strong { color: var(--accent); }
+
+  /* Error msg */
+  .error-msg {
+    background: rgba(247,96,79,0.08);
+    border: 1px solid rgba(247,96,79,0.25);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 0.82rem;
+    color: var(--danger);
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  /* Formula display */
+  .formula-box {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    border-left: 3px solid var(--accent2);
+    line-height: 1.7;
+  }
+  .formula-box span { color: var(--accent2); }
+
+  /* Cohen table */
+  .cohen-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .cohen-table th {
+    color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; font-size: 0.68rem; letter-spacing: 1px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .cohen-table td {
+    padding: 9px 10px; border-bottom: 1px solid rgba(30,45,66,0.5);
+    font-family: 'DM Mono', monospace;
+  }
+  .cohen-table tr:last-child td { border-bottom: none; }
+  .cohen-table .small { color: #6b9fd4; }
+  .cohen-table .medium { color: var(--accent3); }
+  .cohen-table .large { color: var(--accent); }
+
+  /* Info section */
+  .info-section { margin-top: 36px; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+  }
+  .info-card h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .info-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* Section label */
+  .section-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 60px;
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.77rem;
+    color: var(--text-dim);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* Tooltip */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-icon {
+    width: 15px; height: 15px;
+    background: var(--text-dim);
+    color: var(--bg);
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 700;
+    cursor: help; margin-left: 4px; vertical-align: middle;
+  }
+  .tooltip-content {
+    display: none;
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 12px;
+    font-size: 0.75rem; color: var(--text-muted);
+    white-space: nowrap; z-index: 100;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+  }
+  .tooltip-wrap:hover .tooltip-content { display: block; }
+
+  /* Tabs for Cohen ref table */
+  .tab-bar {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+  }
+  .tab-item {
+    padding: 8px 14px;
+    font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.15s;
+    font-family: 'Outfit', sans-serif;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab-item:hover { color: var(--text); }
+  .tab-item.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+
+  /* MARS Logo */
+  .mars-logo {
+    height: 90px;
+    width: auto;
+    flex-shrink: 0;
+    filter: none;
+  }
+  .logo-text h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    line-height: 1.2;
+    max-width: 540px;
+  }
+  .logo-sub {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    letter-spacing: 0;
+    text-transform: none;
+    margin-top: 5px;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+  /* Override old logo-text h1 since we redefine it */
+  .logo { align-items: flex-start; }
+
+  /* Sample size tab */
+  #tab-samplesize .ss-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  #tab-samplesize .ss-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  #tab-samplesize .ss-card .ss-test {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  #tab-samplesize .ss-card .ss-formula {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  #tab-samplesize .ss-card .ss-note {
+    font-size: 0.69rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-style: italic;
+  }
+  #tab-samplesize .ss-card .ss-param {
+    display: inline-block;
+    background: rgba(77,184,255,0.1);
+    border: 1px solid rgba(77,184,255,0.2);
+    color: var(--accent);
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin: 2px 1px 0 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <img src="data:image/png;base64,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" alt="MARS Logo" class="mars-logo" />
+        <div class="logo-text">
+          <h1>MARS Comprehensive Sample Size Calculator</h1>
+          <p class="logo-sub">Bridging the gap in research methodology — calculate sample sizes, statistical power, and effect sizes for t-tests, ANOVA, chi-squared, correlations, regression, and proportion tests · Based on Cohen (1988)</p>
+        </div>
+      </div>
+      <div class="badge">Based on Cohen (1988)</div>
+    </div>
+  </header>
+
+  <!-- Test selector -->
+  <div class="section-label">Select Statistical Test</div>
+  <div class="test-selector" id="testSelector"></div>
+
+  <div class="main-grid">
+    <!-- Input Panel -->
+    <div>
+      <div class="card" id="inputCard">
+        <div class="card-title" id="cardTitle">t-Test for Means</div>
+        <div class="card-desc" id="cardDesc">One-sample, two-sample (equal or unequal sizes), or paired t-test.</div>
+
+        <!-- Solve for -->
+        <div class="solve-label">Solve For</div>
+        <div class="solve-target" id="solveTarget"></div>
+
+        <!-- ES Presets -->
+        <div id="esPresetWrap">
+          <div class="es-preset-label">Cohen's Effect Size Presets</div>
+          <div class="es-presets" id="esPresets"></div>
+        </div>
+
+        <!-- Dynamic form -->
+        <div id="dynamicForm"></div>
+
+        <button class="calc-btn" onclick="calculate()">⟶ Calculate</button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <!-- Cohen Reference -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-title">Effect Size Reference</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:16px;">Cohen's conventional benchmarks</div>
+        <div class="tab-bar">
+          <button class="tab-item active" onclick="switchTab('tab-es', this)">Effect Sizes</button>
+          <button class="tab-item" onclick="switchTab('tab-power', this)">Power Levels</button>
+          <button class="tab-item" onclick="switchTab('tab-alpha', this)">Alpha Levels</button>
+          <button class="tab-item" onclick="switchTab('tab-samplesize', this)">Sample Size Guide</button>
+        </div>
+        <div class="tab-content active" id="tab-es">
+          <table class="cohen-table">
+            <thead><tr><th>Test</th><th>ES Measure</th><th class="small">Small</th><th class="medium">Medium</th><th class="large">Large</th></tr></thead>
+            <tbody>
+              <tr><td>t-test</td><td>d</td><td class="small">0.20</td><td class="medium">0.50</td><td class="large">0.80</td></tr>
+              <tr><td>Proportion</td><td>h</td><td class="small">0.20</td><td class="medium">0.50</td><td class="large">0.80</td></tr>
+              <tr><td>Correlation</td><td>r</td><td class="small">0.10</td><td class="medium">0.30</td><td class="large">0.50</td></tr>
+              <tr><td>ANOVA</td><td>f</td><td class="small">0.10</td><td class="medium">0.25</td><td class="large">0.40</td></tr>
+              <tr><td>Chi-squared</td><td>w</td><td class="small">0.10</td><td class="medium">0.30</td><td class="large">0.50</td></tr>
+              <tr><td>Regression</td><td>f²</td><td class="small">0.02</td><td class="medium">0.15</td><td class="large">0.35</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="tab-power">
+          <table class="cohen-table">
+            <thead><tr><th>Power (1−β)</th><th>Interpretation</th><th>Common Use</th></tr></thead>
+            <tbody>
+              <tr><td class="small">0.50</td><td>Underpowered</td><td>Exploratory</td></tr>
+              <tr><td class="medium">0.80</td><td>Standard</td><td>Most research</td></tr>
+              <tr><td class="large">0.90</td><td>High power</td><td>Clinical trials</td></tr>
+              <tr><td class="large">0.95</td><td>Very high</td><td>High-stakes decisions</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="tab-alpha">
+          <table class="cohen-table">
+            <thead><tr><th>Alpha (α)</th><th>Type I Error Risk</th><th>Common Use</th></tr></thead>
+            <tbody>
+              <tr><td class="large">0.10</td><td>10%</td><td>Exploratory studies</td></tr>
+              <tr><td class="medium">0.05</td><td>5%</td><td>Standard convention</td></tr>
+              <tr><td class="small">0.01</td><td>1%</td><td>Strict criteria</td></tr>
+              <tr><td class="small">0.001</td><td>0.1%</td><td>Genome-wide studies</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-content" id="tab-samplesize">
+          <div style="font-size:0.77rem;color:var(--text-muted);margin-bottom:12px;line-height:1.5;">
+            Minimum N required per test (power = 0.80, α = 0.05, two-sided) at Cohen's conventional effect sizes.
+          </div>
+          <div class="ss-grid">
+            <div class="ss-card">
+              <div class="ss-test">📊 t-Test (Two-Sample)</div>
+              <div class="ss-formula">Small (d=0.2): <strong style="color:var(--accent)">394</strong> per group<br>Medium (d=0.5): <strong style="color:var(--accent3)">64</strong> per group<br>Large (d=0.8): <strong style="color:var(--accent2)">26</strong> per group</div>
+              <span class="ss-param">pwr.t.test</span>
+              <div class="ss-note">n per group × 2 = total N</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">📊 t-Test (One-Sample / Paired)</div>
+              <div class="ss-formula">Small (d=0.2): <strong style="color:var(--accent)">197</strong><br>Medium (d=0.5): <strong style="color:var(--accent3)">34</strong><br>Large (d=0.8): <strong style="color:var(--accent2)">15</strong></div>
+              <span class="ss-param">pwr.t.test</span>
+              <div class="ss-note">type = "one.sample" or "paired"</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">🎯 One Proportion</div>
+              <div class="ss-formula">Small (h=0.2): <strong style="color:var(--accent)">197</strong><br>Medium (h=0.5): <strong style="color:var(--accent3)">33</strong><br>Large (h=0.8): <strong style="color:var(--accent2)">14</strong></div>
+              <span class="ss-param">pwr.p.test</span>
+              <div class="ss-note">Uses arcsine transformation</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">🔀 Two Proportions (Equal n)</div>
+              <div class="ss-formula">Small (h=0.2): <strong style="color:var(--accent)">394</strong> per group<br>Medium (h=0.5): <strong style="color:var(--accent3)">65</strong> per group<br>Large (h=0.8): <strong style="color:var(--accent2)">26</strong> per group</div>
+              <span class="ss-param">pwr.2p.test</span>
+              <div class="ss-note">h = ES.h(p1, p2)</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">🔗 Pearson Correlation</div>
+              <div class="ss-formula">Small (r=0.1): <strong style="color:var(--accent)">782</strong><br>Medium (r=0.3): <strong style="color:var(--accent3)">84</strong><br>Large (r=0.5): <strong style="color:var(--accent2)">28</strong></div>
+              <span class="ss-param">pwr.r.test</span>
+              <div class="ss-note">Fisher Z' transformation applied</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">📈 One-Way ANOVA (k=4 groups)</div>
+              <div class="ss-formula">Small (f=0.1): <strong style="color:var(--accent)">274</strong> per group<br>Medium (f=0.25): <strong style="color:var(--accent3)">45</strong> per group<br>Large (f=0.4): <strong style="color:var(--accent2)">18</strong> per group</div>
+              <span class="ss-param">pwr.anova.test</span>
+              <div class="ss-note">Balanced design (equal group sizes)</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">χ² Chi-Squared (df=2)</div>
+              <div class="ss-formula">Small (w=0.1): <strong style="color:var(--accent)">964</strong> total<br>Medium (w=0.3): <strong style="color:var(--accent3)">108</strong> total<br>Large (w=0.5): <strong style="color:var(--accent2)">40</strong> total</div>
+              <span class="ss-param">pwr.chisq.test</span>
+              <div class="ss-note">df = (rows−1)(cols−1)</div>
+            </div>
+            <div class="ss-card">
+              <div class="ss-test">📐 Regression / GLM (u=5)</div>
+              <div class="ss-formula">Small (f²=0.02): <strong style="color:var(--accent)">N≈485</strong><br>Medium (f²=0.15): <strong style="color:var(--accent3)">N≈92</strong><br>Large (f²=0.35): <strong style="color:var(--accent2)">N≈50</strong></div>
+              <span class="ss-param">pwr.f2.test</span>
+              <div class="ss-note">N = v + u + 1; u = predictors</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div>
+      <div class="result-card" id="resultCard">
+        <div class="result-empty" id="resultEmpty">
+          <div class="empty-icon">📊</div>
+          <p>Select a test, fill in parameters,<br>and click <strong style="color:var(--text-muted)">Calculate</strong> to see results.</p>
+        </div>
+        <div class="result-main" id="resultMain">
+          <div class="card-title" style="margin-bottom:4px;" id="resultTitle">Result</div>
+          <div class="formula-box" id="resultFormula"></div>
+          <div class="result-highlight">
+            <div class="rh-label" id="rhLabel">Sample Size</div>
+            <div class="rh-value" id="rhValue">—</div>
+            <div class="rh-unit" id="rhUnit"></div>
+          </div>
+          <div class="power-bar-wrap" id="powerBarWrap">
+            <div class="power-bar-label">
+              <span>Statistical Power</span>
+              <span id="powerBarPct">—</span>
+            </div>
+            <div class="power-bar-track">
+              <div class="power-bar-fill" id="powerBarFill"></div>
+            </div>
+          </div>
+          <div class="result-params" id="resultParams"></div>
+          <div class="interpretation" id="resultInterpretation"></div>
+        </div>
+      </div>
+
+      <!-- Info cards -->
+      <div class="info-section">
+        <div class="section-label">Quick Reference</div>
+        <div class="info-grid">
+          <div class="info-card">
+            <h4>🎯 What is Power?</h4>
+            <p>Statistical power (1−β) is the probability of correctly rejecting a false null hypothesis. The conventional minimum is <strong style="color:var(--accent)">0.80 (80%)</strong>.</p>
+          </div>
+          <div class="info-card">
+            <h4>⚠️ Type I vs Type II</h4>
+            <p><strong style="color:var(--accent3)">α</strong> = False positive rate (Type I error). <strong style="color:var(--danger)">β</strong> = False negative rate (Type II). Power = 1−β.</p>
+          </div>
+          <div class="info-card">
+            <h4>📐 Effect Size</h4>
+            <p>Standardized measure of the magnitude of an effect. Larger effects require smaller samples to detect at the same power level.</p>
+          </div>
+          <div class="info-card">
+            <h4>📚 Reference</h4>
+            <p>All calculations follow <strong style="color:var(--text)">Cohen, J. (1988)</strong>. Statistical Power Analysis for the Behavioral Sciences, 2nd ed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>MARS Comprehensive Sample Size Calculator · <em>Bridging the Gap</em> · Based on Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, 2nd ed. · <a href="https://github.com/heliosdrm/pwr" target="_blank">pwr R package</a></p>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// STATISTICAL CALCULATION ENGINE (JavaScript port of R's pwr)
+// ============================================================
+
+const jStat = {
+  // Normal distribution CDF (Abramowitz & Stegun)
+  normalCDF: function(x) {
+    const t = 1/(1+0.2316419*Math.abs(x));
+    const d = 0.3989422820*Math.exp(-x*x/2);
+    const prob = d*t*(0.3193815+t*(-0.3565638+t*(1.7814779+t*(-1.8212560+t*1.3302744))));
+    return x > 0 ? 1-prob : prob;
+  },
+  // Inverse normal (Beasley-Springer-Moro)
+  normalInv: function(p) {
+    const a = [2.515517,0.802853,0.010328];
+    const b = [1.432788,0.189269,0.001308];
+    const t = p < 0.5 ? Math.sqrt(-2*Math.log(p)) : Math.sqrt(-2*Math.log(1-p));
+    const num = a[0]+t*(a[1]+t*a[2]);
+    const den = 1+t*(b[0]+t*(b[1]+t*b[2]));
+    const x = t - num/den;
+    return p < 0.5 ? -x : x;
+  },
+  // Chi-squared CDF (regularized incomplete gamma)
+  chi2CDF: function(x, df) {
+    return this.gammaCDF(x/2, df/2);
+  },
+  // Regularized incomplete gamma via series expansion
+  gammaCDF: function(x, a) {
+    if (x <= 0) return 0;
+    if (x > a + 1) return 1 - this.gammaIncUpper(x, a);
+    return this.gammaIncLower(x, a);
+  },
+  gammaIncLower: function(x, a) {
+    let term = 1/a, sum = term;
+    for (let n=1; n<200; n++) {
+      term *= x/(a+n);
+      sum += term;
+      if (Math.abs(term) < 1e-10*Math.abs(sum)) break;
+    }
+    return sum * Math.exp(-x + a*Math.log(x) - this.logGamma(a));
+  },
+  gammaIncUpper: function(x, a) {
+    let b=x+1-a, c=1/1e-30, d=1/b, h=d;
+    for (let i=1; i<200; i++) {
+      const an = -i*(i-a);
+      b += 2; d = an*d+b; if(Math.abs(d)<1e-30) d=1e-30;
+      c = b+an/c; if(Math.abs(c)<1e-30) c=1e-30;
+      d = 1/d; const del = d*c; h *= del;
+      if (Math.abs(del-1) < 1e-10) break;
+    }
+    return Math.exp(-x + a*Math.log(x) - this.logGamma(a)) * h;
+  },
+  logGamma: function(x) {
+    const c = [76.18009172947146,-86.50532032941677,24.01409824083091,
+               -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+    let y=x, tmp=x+5.5, ser=1.000000000190015;
+    tmp -= (x+0.5)*Math.log(tmp);
+    for(let j=0;j<6;j++) ser += c[j]/++y;
+    return -tmp+Math.log(2.5066282746310005*ser/x);
+  },
+  // F distribution CDF using regularized incomplete beta
+  fCDF: function(x, df1, df2) {
+    const t = df1*x/(df1*x+df2);
+    return this.betaCDF(t, df1/2, df2/2);
+  },
+  betaCDF: function(x, a, b) {
+    if (x<=0) return 0; if (x>=1) return 1;
+    if (x < (a+1)/(a+b+2)) return this.betaInc(x,a,b);
+    return 1 - this.betaInc(1-x,b,a);
+  },
+  betaInc: function(x, a, b) {
+    const lbeta = this.logGamma(a)+this.logGamma(b)-this.logGamma(a+b);
+    const front = Math.exp(a*Math.log(x)+b*Math.log(1-x)-lbeta)/a;
+    return front * this.betaCF(x,a,b);
+  },
+  betaCF: function(x, a, b) {
+    const qab=a+b, qap=a+1, qam=a-1;
+    let c=1, d=1-qab*x/qap; if(Math.abs(d)<1e-30)d=1e-30; d=1/d; let h=d;
+    for(let m=1;m<200;m++){
+      let m2=2*m;
+      let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+      d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30;
+      c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30;
+      d=1/d; h*=d*c;
+      aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+      d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30;
+      c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30;
+      d=1/d; const del=d*c; h*=del;
+      if(Math.abs(del-1)<1e-10) break;
+    }
+    return h;
+  },
+  // Non-central F CDF approximation
+  ncFCDF: function(x, df1, df2, ncp) {
+    if (ncp === 0) return this.fCDF(x, df1, df2);
+    // Series expansion
+    let sum=0, term, k=0;
+    const lambda = ncp/2;
+    const logLambda = Math.log(lambda);
+    let logPoissonWeight = -lambda;
+    for(let i=0;i<150;i++){
+      const w = Math.exp(logPoissonWeight);
+      if(w > 1e-15){
+        term = w * this.fCDF(x, df1+2*i, df2);
+        sum += term;
+      }
+      logPoissonWeight += logLambda - Math.log(i+1);
+      k = i;
+      if(i > 20 && term < 1e-10) break;
+    }
+    return sum;
+  },
+  // Non-central chi2 CDF
+  ncChi2CDF: function(x, df, ncp) {
+    if (ncp === 0) return this.chi2CDF(x, df);
+    let sum = 0;
+    const lambda = ncp/2;
+    let logW = -lambda;
+    for(let i=0;i<150;i++){
+      const w = Math.exp(logW);
+      if(w > 1e-15) sum += w * this.chi2CDF(x, df+2*i);
+      logW += Math.log(lambda) - Math.log(i+1);
+      if(i>10 && Math.exp(logW)*1 < 1e-10) break;
+    }
+    return sum;
+  }
+};
+
+// ---- uniroot (bisection method) ----
+function uniroot(f, lower, upper, tol=1e-7, maxIter=1000) {
+  let a=lower, b=upper, fa=f(a), fb=f(b);
+  if(fa*fb > 0) throw new Error("Root not bracketed");
+  for(let i=0; i<maxIter; i++){
+    const c=(a+b)/2, fc=f(c);
+    if(Math.abs(fc)<tol || (b-a)/2<tol) return c;
+    if(fa*fc < 0){ b=c; fb=fc; } else { a=c; fa=fc; }
+  }
+  return (a+b)/2;
+}
+
+// ============================================================
+// POWER FUNCTIONS
+// ============================================================
+
+function pwr_t_test({n=null, d=null, sig_level=0.05, power=null, type='two.sample', alternative='two.sided'}) {
+  const tside = alternative==='two.sided' ? 2 : 1;
+  const nu = type==='one.sample'||type==='paired' ? (n-1) : 2*(n-1);
+  const tsPow = (n, d) => {
+    const nu2 = type==='one.sample'||type==='paired' ? (n-1) : 2*(n-1);
+    const ncp = type==='two.sample' ? d*Math.sqrt(n/2) : d*Math.sqrt(n);
+    const crit = jStat.normalInv(1-sig_level/tside); // approx with normal for large df
+    if(alternative==='greater') return 1-jStat.normalCDF(crit - ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit - ncp);
+    return 1 - jStat.normalCDF(crit-ncp) + jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(n, d);
+  if(n===null) return uniroot(n=>tsPow(n,d)-power, 2, 1e6);
+  if(d===null) return uniroot(d=>tsPow(n,d)-power, 1e-5, 100);
+  if(sig_level===null) return 0.05; // simplified
+}
+
+function pwr_t2n_test({n1, n2, d=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside = alternative==='two.sided'?2:1;
+  const tsPow = (d2) => {
+    const ncp = d2/Math.sqrt(1/n1+1/n2);
+    const crit = jStat.normalInv(1-sig_level/tside);
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(d);
+  if(d===null) return uniroot(d=>tsPow(d)-power, 1e-5, 100);
+}
+
+function pwr_2p_test({h=null, n=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside = alternative==='two.sided'?2:1;
+  const tsPow = (n2, h2) => {
+    const crit = jStat.normalInv(1-sig_level/tside);
+    const ncp = h2*Math.sqrt(n2/2);
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(n, h);
+  if(n===null) return uniroot(n=>tsPow(n,h)-power, 2, 1e7);
+  if(h===null) return uniroot(h=>tsPow(n,h)-power, 1e-5, 20);
+}
+
+function pwr_2p2n_test({h=null, n1=null, n2=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside=alternative==='two.sided'?2:1;
+  const tsPow=(h2)=>{
+    const crit=jStat.normalInv(1-sig_level/tside);
+    const ncp=h2/Math.sqrt(1/n1+1/n2);
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(h);
+  if(n2===null) return uniroot(n=>{ n2=n; return tsPow(h)-power; },2,1e7);
+  if(h===null) return uniroot(h=>tsPow(h)-power,1e-5,20);
+}
+
+function pwr_p_test({h=null, n=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside=alternative==='two.sided'?2:1;
+  const tsPow=(n2,h2)=>{
+    const crit=jStat.normalInv(1-sig_level/tside);
+    const ncp=h2*Math.sqrt(n2);
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(n, h);
+  if(n===null) return uniroot(n=>tsPow(n,h)-power, 2, 1e7);
+  if(h===null) return uniroot(h=>tsPow(n,h)-power,1e-5,20);
+}
+
+function pwr_r_test({n=null, r=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside=alternative==='two.sided'?2:1;
+  const tsPow=(n2,r2)=>{
+    const zp=Math.atanh(r2)+r2/(2*(n2-1));
+    const se=1/Math.sqrt(n2-3);
+    const crit=jStat.normalInv(1-sig_level/tside);
+    const ncp=zp/se;
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(n, r);
+  if(n===null) return Math.ceil(uniroot(n=>tsPow(n,r)-power, 4, 1e6));
+  if(r===null) return uniroot(r=>tsPow(n,r)-power,1e-5,0.9999);
+}
+
+function pwr_anova_test({k=null, n=null, f=null, sig_level=0.05, power=null}) {
+  const tsPow=(n2,f2)=>{
+    const df1=k-1, df2=k*(n2-1);
+    const ncp=k*n2*f2*f2;
+    const crit_f_approx = (() => {
+      // approximate F critical via chi2/df1
+      const chi_crit = uniroot(x=>jStat.chi2CDF(x,df1)-(1-sig_level), 0.001, 1000);
+      return chi_crit/df1;
+    })();
+    return 1-jStat.ncFCDF(crit_f_approx, df1, df2, ncp);
+  };
+  if(power===null) return tsPow(n,f);
+  if(n===null) return Math.ceil(uniroot(n=>tsPow(n,f)-power, 2, 1e5));
+  if(f===null) return uniroot(f=>tsPow(n,f)-power,1e-5,100);
+}
+
+function pwr_chisq_test({w=null, N=null, df=null, sig_level=0.05, power=null}) {
+  const crit=uniroot(x=>jStat.chi2CDF(x,df)-(1-sig_level), 1e-5, 1e5);
+  const tsPow=(N2,w2)=>{
+    const ncp=N2*w2*w2;
+    return 1-jStat.ncChi2CDF(crit, df, ncp);
+  };
+  if(power===null) return tsPow(N,w);
+  if(N===null) return Math.ceil(uniroot(N=>tsPow(N,w)-power, 2, 1e7));
+  if(w===null) return uniroot(w=>tsPow(N,w)-power,1e-5,100);
+}
+
+function pwr_f2_test({u=null, v=null, f2=null, sig_level=0.05, power=null}) {
+  const tsPow=(v2,f22)=>{
+    const ncp=f22*(u+v2+1);
+    const crit_f = (() => {
+      return uniroot(x=>jStat.fCDF(x,u,v2)-(1-sig_level), 1e-5, 1e5);
+    })();
+    return 1-jStat.ncFCDF(crit_f, u, v2, ncp);
+  };
+  if(power===null) return tsPow(v,f2);
+  if(v===null) return Math.ceil(uniroot(v=>tsPow(v,f2)-power, 2, 1e6));
+  if(f2===null) return uniroot(f2=>tsPow(v,f2)-power,1e-5,1000);
+}
+
+function pwr_norm_test({d=null, n=null, sig_level=0.05, power=null, alternative='two.sided'}) {
+  const tside=alternative==='two.sided'?2:1;
+  const tsPow=(n2,d2)=>{
+    const crit=jStat.normalInv(1-sig_level/tside);
+    const ncp=d2*Math.sqrt(n2);
+    if(alternative==='greater') return 1-jStat.normalCDF(crit-ncp);
+    if(alternative==='less') return jStat.normalCDF(-crit-ncp);
+    return 1-jStat.normalCDF(crit-ncp)+jStat.normalCDF(-crit-ncp);
+  };
+  if(power===null) return tsPow(n,d);
+  if(n===null) return Math.ceil(uniroot(n=>tsPow(n,d)-power,2,1e7));
+  if(d===null) return uniroot(d=>tsPow(n,d)-power,1e-5,100);
+}
+
+// ES helpers
+function ES_h(p1, p2) { return 2*Math.asin(Math.sqrt(p1))-2*Math.asin(Math.sqrt(p2)); }
+
+// ============================================================
+// TEST DEFINITIONS
+// ============================================================
+const TESTS = [
+  {
+    id:'t_test', icon:'📊', name:'t-Test', desc:'Means',
+    title:'t-Test for Means',
+    fullDesc:'One-sample, two-sample (equal sizes), or paired t-test. Effect size is Cohen\'s d (difference/SD).',
+    formula:'Power = Φ(ncp − z<sub>α/2</sub>) + Φ(−ncp − z<sub>α/2</sub>)<br>where ncp = d·√(n/c)',
+    esParam:'d',
+    esPresets:{test:'t',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['n','d','power','sig_level'],
+    solveLabels:{n:'Sample Size (n)',d:'Effect Size (d)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'type',label:'Test Type',type:'select',options:[['two.sample','Two-sample (independent)'],['one.sample','One-sample'],['paired','Paired samples']],default:'two.sample'},
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n',label:'Sample Size (n)',tooltip:'Per group for two-sample',type:'number',default:30,min:2},
+      {id:'d',label:"Cohen's d",tooltip:'(μ1−μ2)/σ pooled',type:'number',default:0.5,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,min:0.001,max:0.5,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={n:+vals.n,d:+vals.d,sig_level:+vals.sig_level,power:+vals.power,type:vals.type,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result = pwr_t_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result, solveFor, label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,
+        n:solveFor==='n'?Math.ceil(result):+vals.n};
+    },
+    interpret(res,vals){
+      const type={two:'Two independent samples','one':'One sample','paired':'Paired samples'}[vals.type?.slice(0,3)]||vals.type;
+      return `<strong>${type} t-test</strong>: With <strong>n=${res.n}</strong> observations${vals.type==='two.sample'?' per group':''}, effect size d=${+vals.d||res.value?.toFixed(3)}, and α=${vals.sig_level}, the estimated power is <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'t2n_test', icon:'⚖️', name:'t-Test 2n', desc:'Unequal n',
+    title:'t-Test (Unequal Sample Sizes)',
+    fullDesc:'Two-sample t-test when sample sizes differ between groups. Provide both n1 and n2.',
+    formula:'ncp = d / √(1/n1 + 1/n2)',
+    esParam:'d',
+    esPresets:{test:'t',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['d','power'],
+    solveLabels:{d:"Effect Size (d)",power:'Power (1-β)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n1',label:'n₁ (Group 1 size)',type:'number',default:90,min:2},
+      {id:'n2',label:'n₂ (Group 2 size)',type:'number',default:60,min:2},
+      {id:'d',label:"Cohen's d",type:'number',default:0.5,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={n1:+vals.n1,n2:+vals.n2,d:+vals.d,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result = pwr_t2n_test(args);
+      return {value:result, solveFor, label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power, n:+vals.n1};
+    },
+    interpret(res,vals){
+      return `<strong>Two-sample t-test</strong> (unequal n): With n1=${vals.n1}, n2=${vals.n2}, d=${res.solveFor==='d'?res.value.toFixed(3):vals.d}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'p_test', icon:'🎯', name:'Proportion 1', desc:'One sample',
+    title:'Proportion Test (One Sample)',
+    fullDesc:'Test for a single proportion versus a hypothesized value. Uses arcsine transformation.',
+    formula:'h = 2·arcsin(√p1) − 2·arcsin(√p2)',
+    esParam:'h',
+    esPresets:{test:'p',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['n','h','power','sig_level'],
+    solveLabels:{n:'Sample Size (n)',h:'Effect Size (h)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n',label:'Sample Size (n)',type:'number',default:60,min:2},
+      {id:'h',label:'Effect Size (h)',tooltip:'Use ES.h(p1, p2) = 2arcsin√p1 − 2arcsin√p2',type:'number',default:0.2,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={h:+vals.h,n:+vals.n,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result=pwr_p_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='n'?Math.ceil(result):+vals.n};
+    },
+    interpret(res,vals){
+      return `<strong>One-proportion test</strong>: With n=${res.n}, effect size h=${+vals.h||res.value?.toFixed(3)}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'2p_test', icon:'🔀', name:'Proportion 2', desc:'Two samples',
+    title:'Two-Proportion Test (Equal n)',
+    fullDesc:'Test comparing two proportions with equal sample sizes per group.',
+    formula:'h = 2arcsin(√p1)−2arcsin(√p2), ncp = h·√(n/2)',
+    esParam:'h',
+    esPresets:{test:'p',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['n','h','power','sig_level'],
+    solveLabels:{n:'n per group',h:'Effect Size (h)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n',label:'n per Group',type:'number',default:80,min:2},
+      {id:'h',label:'Effect Size (h)',type:'number',default:0.3,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={h:+vals.h,n:+vals.n,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result=pwr_2p_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='n'?Math.ceil(result):+vals.n};
+    },
+    interpret(res,vals){
+      return `<strong>Two-proportion test</strong>: With n=${res.n} per group, h=${+vals.h||res.value?.toFixed(3)}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'2p2n_test', icon:'⚡', name:'Proportion 2n', desc:'Unequal n',
+    title:'Two-Proportion Test (Unequal n)',
+    fullDesc:'Test for two proportions when the groups have different sample sizes.',
+    formula:'h = 2arcsin(√p1) − 2arcsin(√p2)',
+    esParam:'h',
+    esPresets:{test:'p',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['h','power'],
+    solveLabels:{h:'Effect Size (h)',power:'Power (1-β)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n1',label:'n₁ (Group 1)',type:'number',default:80,min:2},
+      {id:'n2',label:'n₂ (Group 2)',type:'number',default:245,min:2},
+      {id:'h',label:'Effect Size (h)',type:'number',default:0.3,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={h:+vals.h,n1:+vals.n1,n2:+vals.n2,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result=pwr_2p2n_test(args);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:+vals.n1};
+    },
+    interpret(res,vals){
+      return `<strong>Two-proportion test</strong> (unequal n): n1=${vals.n1}, n2=${vals.n2}, h=${+vals.h||res.value?.toFixed(3)}, α=${vals.sig_level}, power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'r_test', icon:'🔗', name:'Correlation', desc:'Pearson r',
+    title:'Correlation Test (Pearson r)',
+    fullDesc:'Power analysis for testing if a linear correlation coefficient r differs from zero. Uses Fisher\'s Z\' transformation.',
+    formula:"Z' = arctanh(r) + r/(2(n−1)), ncp = Z'/SE",
+    esParam:'r',
+    esPresets:{test:'r',small:0.1,medium:0.3,large:0.5},
+    solveOptions:['n','r','power','sig_level'],
+    solveLabels:{n:'Sample Size (n)',r:'Correlation (r)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n',label:'Sample Size (n)',type:'number',default:50,min:4},
+      {id:'r',label:'Correlation (r)',tooltip:'Expected Pearson r coefficient',type:'number',default:0.3,min:0.001,max:0.9999,step:0.01},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={n:+vals.n,r:+vals.r,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result=pwr_r_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='n'?Math.ceil(result):+vals.n};
+    },
+    interpret(res,vals){
+      return `<strong>Correlation test</strong>: With n=${res.n}, r=${+vals.r||res.value?.toFixed(3)}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'anova_test', icon:'📈', name:'ANOVA', desc:'One-way',
+    title:'One-Way Balanced ANOVA',
+    fullDesc:'Power analysis for a one-way balanced ANOVA. All groups must have equal sample sizes.',
+    formula:'ncp = k·n·f²',
+    esParam:'f',
+    esPresets:{test:'anov',small:0.1,medium:0.25,large:0.4},
+    solveOptions:['n','f','power','sig_level'],
+    solveLabels:{n:'n per group',f:'Effect Size (f)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'k',label:'Number of Groups (k)',type:'number',default:4,min:2,step:1},
+      {id:'n',label:'n per Group',type:'number',default:20,min:2},
+      {id:'f',label:"Cohen's f",tooltip:'σ_between/σ_within',type:'number',default:0.25,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={k:+vals.k,n:+vals.n,f:+vals.f,sig_level:+vals.sig_level,power:+vals.power};
+      args[solveFor]=null;
+      let result=pwr_anova_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='n'?Math.ceil(result):+vals.n,
+        extra:{totalN: (solveFor==='n'?Math.ceil(result):+vals.n) * (+vals.k)}};
+    },
+    interpret(res,vals){
+      const total=(res.n)*(+vals.k);
+      return `<strong>One-way ANOVA</strong>: k=${vals.k} groups, n=${res.n} per group (<strong>total N=${total}</strong>), f=${+vals.f||res.value?.toFixed(3)}, α=${vals.sig_level}, power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'chisq_test', icon:'χ²', name:'Chi-Squared', desc:'Association',
+    title:'Chi-Squared Test',
+    fullDesc:'Power analysis for goodness-of-fit and association chi-squared tests. Effect size w measures deviation from independence.',
+    formula:'ncp = N·w²',
+    esParam:'w',
+    esPresets:{test:'chisq',small:0.1,medium:0.3,large:0.5},
+    solveOptions:['N','w','power','sig_level'],
+    solveLabels:{N:'Total N',w:'Effect Size (w)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'df',label:'Degrees of Freedom (df)',tooltip:'For r×c table: (r-1)(c-1)',type:'number',default:2,min:1,step:1},
+      {id:'N',label:'Total N',type:'number',default:100,min:2},
+      {id:'w',label:"Cohen's w",type:'number',default:0.3,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={w:+vals.w,N:+vals.N,df:+vals.df,sig_level:+vals.sig_level,power:+vals.power};
+      args[solveFor]=null;
+      let result=pwr_chisq_test(args);
+      if(solveFor==='N') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='N'?Math.ceil(result):+vals.N};
+    },
+    interpret(res,vals){
+      return `<strong>Chi-squared test</strong>: df=${vals.df}, N=${res.n}, w=${+vals.w||res.value?.toFixed(3)}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'f2_test', icon:'📐', name:'Regression', desc:'General GLM',
+    title:'General Linear Model (F²)',
+    fullDesc:'Power analysis for multiple regression and the general linear model (GLM). f² = R²/(1−R²).',
+    formula:'f² = R²/(1−R²), ncp = f²·(u+v+1)',
+    esParam:'f2',
+    esPresets:{test:'f2',small:0.02,medium:0.15,large:0.35},
+    solveOptions:['v','f2','power','sig_level'],
+    solveLabels:{v:'Error df (v)',f2:'Effect Size (f²)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'u',label:'Numerator df (u)',tooltip:'Number of predictors',type:'number',default:5,min:1,step:1},
+      {id:'v',label:'Denominator df (v)',tooltip:'N − u − 1',type:'number',default:89,min:1},
+      {id:'f2',label:"Cohen's f²",tooltip:'R²/(1−R²)',type:'number',default:0.15,min:0.0001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={u:+vals.u,v:+vals.v,f2:+vals.f2,sig_level:+vals.sig_level,power:+vals.power};
+      args[solveFor]=null;
+      let result=pwr_f2_test(args);
+      if(solveFor==='v') result=Math.ceil(result);
+      const v = solveFor==='v'?Math.ceil(result):+vals.v;
+      const N = v + (+vals.u) + 1;
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power, n:N,
+        extra:{N, u:+vals.u, v:v}};
+    },
+    interpret(res,vals){
+      const v=res.solveFor==='v'?Math.ceil(res.value):+vals.v;
+      const N=v+(+vals.u)+1;
+      return `<strong>GLM / Regression</strong>: u=${vals.u} predictors, v=${v} error df (<strong>N≈${N}</strong>), f²=${+vals.f2||res.value?.toFixed(3)}, α=${vals.sig_level}, power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  },
+  {
+    id:'norm_test', icon:'🔔', name:'Normal Mean', desc:'Known σ',
+    title:'Normal Distribution Test (Known σ)',
+    fullDesc:'Power analysis for testing the mean of a normal distribution when the variance is known (z-test).',
+    formula:'d = (μ − μ₀)/σ',
+    esParam:'d',
+    esPresets:{test:'t',small:0.2,medium:0.5,large:0.8},
+    solveOptions:['n','d','power','sig_level'],
+    solveLabels:{n:'Sample Size (n)',d:'Effect Size (d)',power:'Power (1-β)',sig_level:'Sig. Level (α)'},
+    fields:[
+      {id:'alternative',label:'Alternative',type:'select',options:[['two.sided','Two-sided'],['greater','Greater'],['less','Less']],default:'two.sided'},
+      {id:'n',label:'Sample Size (n)',type:'number',default:20,min:2},
+      {id:'d',label:'Effect Size d = (μ−μ₀)/σ',type:'number',default:0.33,min:0.001},
+      {id:'sig_level',label:'Significance Level (α)',type:'number',default:0.05,step:0.005},
+      {id:'power',label:'Power (1−β)',type:'number',default:0.8,min:0.01,max:0.9999},
+    ],
+    compute(vals,solveFor){
+      const args={d:+vals.d,n:+vals.n,sig_level:+vals.sig_level,power:+vals.power,alternative:vals.alternative};
+      args[solveFor]=null;
+      let result=pwr_norm_test(args);
+      if(solveFor==='n') result=Math.ceil(result);
+      return {value:result,solveFor,label:this.solveLabels[solveFor],
+        power:solveFor==='power'?result:+vals.power,n:solveFor==='n'?Math.ceil(result):+vals.n};
+    },
+    interpret(res,vals){
+      return `<strong>z-test (known σ)</strong>: n=${res.n}, d=${+vals.d||res.value?.toFixed(3)}, α=${vals.sig_level}, estimated power = <strong>${(res.power*100).toFixed(1)}%</strong>.`;
+    }
+  }
+];
+
+// ============================================================
+// UI STATE
+// ============================================================
+let currentTest = TESTS[0];
+let currentSolveFor = 'n';
+
+function initSelector() {
+  const sel = document.getElementById('testSelector');
+  TESTS.forEach((t,i)=>{
+    const btn = document.createElement('button');
+    btn.className='test-btn'+(i===0?' active':'');
+    btn.innerHTML=`<span class="tb-icon">${t.icon}</span><span class="tb-name">${t.name}</span><span class="tb-desc">${t.desc}</span>`;
+    btn.onclick=()=>selectTest(t.id);
+    sel.appendChild(btn);
+  });
+}
+
+function selectTest(id) {
+  currentTest = TESTS.find(t=>t.id===id);
+  document.querySelectorAll('.test-btn').forEach((b,i)=>{
+    b.classList.toggle('active', TESTS[i].id===id);
+  });
+  document.getElementById('cardTitle').textContent=currentTest.title;
+  document.getElementById('cardDesc').textContent=currentTest.fullDesc;
+  currentSolveFor = currentTest.solveOptions[0];
+  renderSolveTarget();
+  renderESPresets();
+  renderForm();
+  hideResult();
+}
+
+function renderSolveTarget() {
+  const wrap = document.getElementById('solveTarget');
+  wrap.innerHTML='';
+  currentTest.solveOptions.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='solve-btn'+(opt===currentSolveFor?' active':'');
+    btn.textContent=currentTest.solveLabels[opt];
+    btn.onclick=()=>{ currentSolveFor=opt; renderSolveTarget(); renderForm(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderESPresets() {
+  const ep = currentTest.esPresets;
+  const wrap=document.getElementById('esPresets');
+  wrap.innerHTML='';
+  if(!ep){document.getElementById('esPresetWrap').style.display='none';return;}
+  document.getElementById('esPresetWrap').style.display='block';
+  [['Small',ep.small],['Medium',ep.medium],['Large',ep.large]].forEach(([label,val])=>{
+    const btn=document.createElement('button');
+    btn.className='es-btn';
+    btn.textContent=`${label}: ${val}`;
+    btn.onclick=()=>{
+      const f=document.getElementById('field_'+currentTest.esParam);
+      if(f){ f.value=val; f.dispatchEvent(new Event('input')); }
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderForm() {
+  const form=document.getElementById('dynamicForm');
+  form.innerHTML='';
+  currentTest.fields.forEach(field=>{
+    const group=document.createElement('div');
+    group.className='form-group';
+    const isDisabled = field.id===currentSolveFor;
+    const labelEl=document.createElement('label');
+    labelEl.innerHTML=field.label+(field.tooltip?`<span class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-content">${field.tooltip}</span></span>`:'');
+    if(isDisabled){
+      const hint=document.createElement('span');
+      hint.className='label-hint';
+      hint.textContent='← solving for this';
+      labelEl.appendChild(hint);
+    }
+    group.appendChild(labelEl);
+    let el;
+    if(field.type==='select'){
+      el=document.createElement('select');
+      el.className='form-control';
+      field.options.forEach(([val,lab])=>{
+        const opt=document.createElement('option');
+        opt.value=val; opt.textContent=lab;
+        if(val===field.default) opt.selected=true;
+        el.appendChild(opt);
+      });
+    } else {
+      el=document.createElement('input');
+      el.type='number';
+      el.className='form-control';
+      el.value=field.default||'';
+      if(field.min!==undefined) el.min=field.min;
+      if(field.max!==undefined) el.max=field.max;
+      if(field.step!==undefined) el.step=field.step;
+      el.disabled=isDisabled;
+      if(isDisabled) el.placeholder='(calculated)';
+    }
+    el.id='field_'+field.id;
+    group.appendChild(el);
+    form.appendChild(group);
+  });
+}
+
+function getFieldValues() {
+  const vals={};
+  currentTest.fields.forEach(f=>{
+    const el=document.getElementById('field_'+f.id);
+    if(el && !el.disabled) vals[f.id]=el.value;
+    else vals[f.id]=f.default;
+  });
+  return vals;
+}
+
+function calculate() {
+  const errEl=document.getElementById('errorMsg');
+  errEl.classList.remove('show');
+  try {
+    const vals=getFieldValues();
+    const res=currentTest.compute(vals, currentSolveFor);
+    showResult(res, vals);
+  } catch(e) {
+    errEl.textContent='Calculation error: '+e.message+'. Please check your parameters.';
+    errEl.classList.add('show');
+    hideResult();
+  }
+}
+
+function showResult(res, vals) {
+  document.getElementById('resultEmpty').style.display='none';
+  const rm=document.getElementById('resultMain');
+  rm.classList.add('show');
+  document.getElementById('resultTitle').textContent=currentTest.title+' — Results';
+  document.getElementById('resultFormula').innerHTML=`<span>Formula:</span> ${currentTest.formula}`;
+  document.getElementById('rhLabel').textContent=res.label;
+  const val=res.value;
+  const isCount=['n','N','v'].includes(res.solveFor);
+  document.getElementById('rhValue').textContent = isCount ? Math.ceil(val).toLocaleString() : (typeof val==='number'&&val<10?val.toFixed(4):val.toFixed(2));
+  document.getElementById('rhUnit').textContent = res.solveFor==='n'?'observations':(res.solveFor==='N'?'total observations':(res.solveFor==='power'?`= ${(val*100).toFixed(1)}% statistical power`:''));
+
+  // Power bar
+  const power=Math.max(0,Math.min(1,res.power));
+  document.getElementById('powerBarPct').textContent=(power*100).toFixed(1)+'%';
+  setTimeout(()=>{ document.getElementById('powerBarFill').style.width=(power*100)+'%'; },50);
+
+  // Params grid
+  const paramsEl=document.getElementById('resultParams');
+  paramsEl.innerHTML='';
+  const paramsList=[
+    ['Power (1−β)', (res.power*100).toFixed(2)+'%'],
+    ['Sig. Level (α)', vals.sig_level||0.05],
+    ...(res.extra ? Object.entries(res.extra).map(([k,v])=>[k,v]) : []),
+  ];
+  paramsList.forEach(([k,v])=>{
+    paramsEl.innerHTML+=`<div class="rp-item"><div class="rp-label">${k}</div><div class="rp-val">${v}</div></div>`;
+  });
+
+  document.getElementById('resultInterpretation').innerHTML=currentTest.interpret(res, vals);
+}
+
+function hideResult() {
+  document.getElementById('resultEmpty').style.display='flex';
+  document.getElementById('resultMain').classList.remove('show');
+  document.getElementById('powerBarFill').style.width='0%';
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Init
+initSelector();
+selectTest('t_test');
+</script>
+</body>
+</html>
